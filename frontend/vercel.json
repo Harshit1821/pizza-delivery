@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://pizza-backend-3tqt.onrender.com"
+      "destination": "https://pizza-backend-3tqt.onrender.com/api/:match*"
     },
     {
       "source": "/(.*)",
