@@ -122,17 +122,21 @@ const resendOTP = async (req, res) => {
     const id = user._id || user.id;
     await dbService.User.findByIdAndUpdate(id, { verificationOTP, otpExpiry });
 
-    await sendEmail({
-      to: email,
-      subject: 'New verification code - Pizza Delivery',
-      text: `Your new verification code is: ${verificationOTP}.`,
-      html: `<p>Your new verification code is: <strong>${verificationOTP}</strong></p><p>This code expires in 5 minutes.</p>`
-    });
-
-    res.status(200).json({
-      message: 'New verification OTP sent.',
-      otp: verificationOTP
-    });
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'New verification code - Pizza Delivery',
+        text: `Your new verification code is: ${verificationOTP}.`,
+        html: `<p>Your new verification code is: <strong>${verificationOTP}</strong></p><p>This code expires in 5 minutes.</p>`
+      });
+      res.status(200).json({ message: 'New verification OTP sent.' });
+    } catch (emailError) {
+      console.warn('Failed to send email:', emailError.message);
+      res.status(200).json({ 
+        message: 'New verification OTP generated. (Demo Mode: Free hosting blocks emails)', 
+        demoOtp: verificationOTP 
+      });
+    }
   } catch (error) {
     console.error('Resend OTP error:', error);
     res.status(500).json({ message: 'Server error resending OTP.' });
@@ -164,18 +168,22 @@ const login = async (req, res) => {
     const id = user._id || user.id;
     await dbService.User.findByIdAndUpdate(id, { verificationOTP, otpExpiry });
 
-    await sendEmail({
-      to: email,
-      subject: 'Login verification code - Pizza Delivery',
-      text: `Your login verification code is: ${verificationOTP}.`,
-      html: `<p>Your login verification code is: <strong>${verificationOTP}</strong></p><p>This code expires in 5 minutes.</p>`
-    });
-
-    res.status(200).json({
-      message: 'OTP sent. Please verify to complete login.',
-      otpRequired: true,
-      otp: verificationOTP // for easy local sandbox testing
-    });
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Login verification code - Pizza Delivery',
+        text: `Your login verification code is: ${verificationOTP}.`,
+        html: `<p>Your login verification code is: <strong>${verificationOTP}</strong></p><p>This code expires in 5 minutes.</p>`
+      });
+      res.status(200).json({ message: 'OTP sent to your email.', userId: id });
+    } catch (emailError) {
+      console.warn('Failed to send email:', emailError.message);
+      res.status(200).json({ 
+        message: 'OTP generated. (Demo Mode: Free hosting blocks emails)', 
+        userId: id, 
+        demoOtp: verificationOTP 
+      });
+    }
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login.' });
